@@ -1,0 +1,231 @@
+
+    <!-- Generátor stránek verze 1 -->
+
+	 oh. 12.02.2009 doplneny texty pro preklad v GLOBALS.xml
+	 oh. 16.06.2009 verze a build cteno ze souboru astatus.xml 
+    
+   <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+  *** striktní kontrola xhtml se dìlá už pøi generaci, takže se pøi chybì nic nevygeneruje
+<xsl:output method="xml" encoding="windows-1250" cdata-section-elements="script" 
+    doctype-public = "-//W3C//DTD XHTML 1.1//EN" 
+    doctype-system =  "http://www.w3c.org/TR/xhtml11/DTD/xhtml11.dtd" 
+/> 
+  *** sekce CDATA ve scriptu je chyba skriptu :
+<xsl:output method="xml" encoding="windows-1250" cdata-section-elements="script" 
+indent="yes"
+/> 
+
+ -->
+
+<!-- verze a build a lokalizace xsl --> 
+<xsl:variable name="astatus" select="document('.\astatus.xml')" />
+
+<!-- texty pouzite rovnou zde v xsl --> 
+<xsl:variable name="globals" select="document('.\LocTemplates\globals.xml')" />
+
+
+ <!-- priznak pro lokalizaci desetinneho oddelovace: 0=tecka 1=carka -->
+ <xsl:variable name="local" select="//ORIGIN/LOKALIZACE" />
+
+ <!--           zacatek         -->
+<xsl:template match="/">
+ <html xml:lang="cz" lang="cz">
+ <head>
+ <title><xsl:value-of select="//head/title"/>:<xsl:value-of select="$astatus//verse/text"/></title>
+
+ <xsl:if test="not(kostra/head/@nostyle)" > <!-- head bez stylu  -->
+   <link type="text/css" rel="stylesheet" href="styly/base.css" title="BASE"/>
+   <link href="styly/base1.css" type="text/css" rel="alternate stylesheet" title="styl1" /> 
+   <link href="styly/base2.css" type="text/css" rel="alternate stylesheet" title="styl2" /> 
+ </xsl:if>
+ <!-- *********** Vlozit pozadovane skripty ******************  -->
+ 
+     <xsl:for-each select="kostra/head/script">
+      <!-- FILE:<xsl:value-of select="@file" />:FILE -->
+       <xsl:if test="@file" >
+        <script  type="text/javascript">//
+          <xsl:copy-of  select="document(@file)/script/text()"/>
+	</script>
+       </xsl:if>
+       <xsl:if test="not(@file)" >
+       <script type="text/javascript">
+          <xsl:copy-of  select="*|text()"/>
+       </script>
+       </xsl:if>
+     </xsl:for-each>
+ <!-- ***********   Vlozit styly  vlastni  ******************  -->
+     <xsl:for-each select="kostra/head/style">
+      <!-- FILE:<xsl:value-of select="@file" />:FILE -->
+       <xsl:if test="@file" >
+          <xsl:copy-of  select="document(@file)/style"/>
+       </xsl:if>
+       <xsl:if test="not(@file)" >
+       <style>
+          <xsl:copy-of  select="*|text()"/>
+       </style>
+       </xsl:if>
+     </xsl:for-each>
+
+     
+     </head>
+      <!--  -->
+      <xsl:apply-templates/>
+      <!--  -->
+  </html>
+  </xsl:template>
+
+
+ <!-- NADPIS UVODNI STRANKY -->
+ <xsl:template match="uvodnistr">
+  
+ <!-- body -->
+ <xsl:template match="body">
+   <body>
+     <!-- init() volame pro nektere stranky s adresarem vlastnich sestav -->
+       <xsl:if test="not(@nocont)" > <!-- volani bez kontextoveho menu -->
+        <xsl:attribute name="oncontextmenu">
+          <xsl:text>ContextMenu(); return false;</xsl:text>
+	</xsl:attribute>
+       </xsl:if>
+      <xsl:attribute name="onload">
+       <xsl:if test="not(@noinit)" > <!-- volani bez init -->
+        <xsl:text>init('</xsl:text>  
+        <xsl:value-of select="//sestavyvlastni/@adresar"/>
+        <xsl:text>');</xsl:text> 
+       </xsl:if>
+	<!-- nekdo potrebuje treba dalsi funkci pro inicializaci -->
+	<xsl:if test="@onload" >
+	  <xsl:value-of select="@onload"/>
+	</xsl:if>
+      </xsl:attribute>
+ </xsl:template>
+ 
+
+ 
+ <!-- Kontextove menu pokud je pozadovano -->
+ <xsl:template match="kontextmenu">
+
+ <!-- *********** zbytek se vzdy zkopiruje jak lezi ******** -->
+ <xsl:template match="ZBYTEK">
+      <xsl:copy-of  select="*"/>
+ </xsl:template>
+ 
+<!-- ************* blok zahlavi ***************** -->
+ <xsl:template match="zahlavi">
+<!-- ********************* zahlavi  ********************  -->
+<table  class="maintab" border="0" >
+     <tr>
+       <td align="center" >
+       	   <DIV class="zahlavi" >
+	     <xsl:value-of select="@nadpis"/> 
+           </DIV>
+	   
+ <!-- Vlozit pozadovane menu v hlavicce  -->
+     <xsl:for-each select="menu/m">
+	<a class="housebutton">
+	 <xsl:attribute name="href"><xsl:value-of select="@akce"/></xsl:attribute>
+	 <xsl:attribute name="title"><xsl:value-of select="@title"/></xsl:attribute>
+	 <xsl:if test="@width">
+	     <xsl:attribute name="style">width:<xsl:value-of select="@width"/>;</xsl:attribute>
+	 </xsl:if>
+
+	 <xsl:value-of select="@nadpis"/> 
+	</a> 
+     </xsl:for-each>
+
+     </td>	
+
+<!-- ************* blok odstavec ***************** -->
+ <xsl:template match="odstavec">
+<!-- **  oddeleni jednoho odstavce zatim pro stranku nastaveni  -->
+       <!--  -->
+       <div class="odstavec">
+        <h3> <xsl:value-of select="@nadpis"/></h3>
+
+
+ <!--         *************** Blok filtry ****************     -->
+ <xsl:template match="filtry">
+       <!-- obsahuje následující možné filtry: -->
+ <xsl:template match="fvozidla">
+   <!-- *** filter vozidel*** --> 
+   
+ <xsl:template match="fcasy">
+   <!-- *** filter casovy*** --> 
+ <xsl:template match="frok">
+   <!-- *** filter casovy na rok *** --> 
+   
+ <xsl:template match="foblast">
+   <!-- *** filter oblasti*** --> 
+ 
+ <xsl:template match="fstred">
+   <!-- *** filter stredisek - zatim nepouzit *** --> 
+
+  <xsl:template match="fprepr">
+   <!-- *** filter  pøepravci*** --> 
+ 
+ <xsl:template match="fsazba">
+   <!-- *** filter sazeb*** --> 
+  <xsl:template match="fsubstr">
+   <!-- *** filter Substráty : *** --> 
+
+ <xsl:template match="fpraczar">
+   <!-- *** filter pracovniho zarazeni *** --> 
+
+  <xsl:template match="fprovp">
+   <!-- *** filter Prov.podmínky : *** --> 
+<xsl:template match="fvlastpp">
+   <!-- *** filter Vlastnosti PP:*** --> 
+ 
+ 
+ <!-- ******** blok sestavy pøeddefinované ********** -->
+ <xsl:template match="sestavyp">
+      Obsahuje:
+
+ <!-- ******** blok sestavy vlastni z adresare XML/xxxx ********** -->
+ <xsl:template match="sestavyvlastni">
+ <div class="sestavyvlastni">
+   <h3> <xsl:value-of select="$globals//vszadr/@nazev"/>: <xsl:value-of select="@adresar"/>
+   <xsl:attribute name="title"><xsl:value-of select="@title"/></xsl:attribute>
+   </h3>
+<!-- obsahuje prázdné sdiv a sdiv2, které jsou dynamicky doplnìny až pøi volání stránky -->
+<!--  -->
+ 
+ 
+ 
+ <!-- ******** blok sestav o vybavach ********** -->
+ <xsl:template match="sestavyvybavy">
+   attributy: "@adresar" , "@title"  a jakýkoli vnoøený blok
+ <form id="formvyb">
+ <!-- zaškrtávací filter na kody výbavy doplní se pøi volání stránky -->
+ 
+ <!-- ******** blok - field  *******  -->
+ <xsl:template match="field">
+   attributy: "@id" , "@title"  a jakýkoli vnoøený blok
+
+ 
+  <!-- blok - menu - umisteni je rizeno uvedenim class -->
+ <xsl:template match="menu">
+   	   <span> obsahuje atributy:
+	   @id , "@class" , @title" , "@width">
+	       dále obsahuje text z atributu :"@nadpis"
+	   <!-- a jakýkoli další blok -->
+
+ <!-- blok - m = tlacitko -->
+ <xsl:template match="m">
+"@akce" , "@title" , "@width" , "@nadpis"/>
+
+<!-- blok - mx = tlacitko  NEAKTIVNI -->
+ <xsl:template match="mx">
+          "title" , "@width" , "@nadpis"/>
+ 
+ <!-- blok - ms = tlacitko svisle -->
+ <xsl:template match="ms">
+"@akce" , "@title" nadpis v tlaèítku je natvrdo TOPTENHITS 
+
+ <!-- blok kecy na spodku stranky -->
+ <xsl:template match="kecy">
+      Kopíruje prostì obsah
+
+
