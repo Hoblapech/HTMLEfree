@@ -5,6 +5,9 @@ Oprava 21:03
 -----------------------
 dalsi zmena
 ---------------
+zmena z lokalu
+++++
+
 
 
 
